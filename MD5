@@ -1,6 +1,6 @@
-c705772757555ba7160f1363cb7bd1d5 *DESCRIPTION
+13630ce15be47162254b52796f436d3c *DESCRIPTION
 01fed234bcda5eb893f0f155aabd46a2 *NAMESPACE
-2bc36c4c03e2b4581778529742792c70 *NEWS.md
+307cb0a96cbe72e4fe6185cbbec6e459 *NEWS.md
 c0bc7c7921b5d1a7246f7208d6cb2706 *R/acf.R
 d41d8cd98f00b204e9800998ecf8427e *R/attach.R
 987d29b958ff1787a509bdc9823e70ea *R/classical.R
@@ -14,12 +14,12 @@ ce829fdf85e0a8a2976e356a87995bd1 *R/gg_geom.R
 e57571e62d50f79a8e7ede6a4e5d11a7 *R/reexports.R
 8f3299494c9c4d9149eb4764a6e945bd *R/seats.R
 c5b8a7bbc644d68a8f5ec22a7f221f1b *R/specials.R
-be5c970fb3135330c14865fd9af5fc35 *R/stl.R
+cc87a98360d8db1e0e59db43fcb30ec2 *R/stl.R
 bcc2e6d5c4b955bdacd735b63d571d00 *R/tests.R
 67af473b8349853525b080af8801f6ef *R/utils.R
 0da2f5e811193a5f4a2651feff844947 *R/x11.R
 8cb388f3dd0dd16221472240be7bc2f5 *R/zzz.R
-8c7f9c1d4f8f6194182e1a790229ce25 *README.md
+64c2a811c0ca64e6d9eda64c243c55ce *README.md
 147fe66e3c8a42bc40f8a7f2371fb362 *build/vignette.rds
 866c0765dc45830689e70c8b74c60c17 *inst/doc/feasts.R
 81524eda54403bb206df8c9043cf8a91 *inst/doc/feasts.Rmd
@@ -39,7 +39,7 @@ d91d4d888b7c44e5d229228714aeb1d2 *man/figures/README-dcmp-1.png
 42fe4c4fbb16fbd096e267267888fea3 *man/figures/README-dcmp-plot-1.png
 37876d222048050a2a4353fc30f583cd *man/figures/README-extreme-1.png
 c9f3d67d867acc13a38a17038f6849b3 *man/figures/README-features-plot-1.png
-a0f7744c8f90ec01714617d3f46ef95b *man/figures/README-graphics-1.png
+746ee735c72fa234517cf19e3f353e90 *man/figures/README-graphics-1.png
 f27f55035daf6dfad0335d39b18234cb *man/figures/README-graphics-2.png
 e68aa587b79ae545fb3a08b927e34502 *man/figures/README-graphics-3.png
 03962908996d474b9a022219e0021456 *man/figures/README-graphics-4.png
@@ -69,7 +69,7 @@ cb9c9d26a941b276e7730b01fbc510d5 *tests/testthat/Rplots.pdf
 a86327257f79884b8f5a473ae35840de *tests/testthat/test-classical.R
 8a0657036f198b522749c1de7f5effea *tests/testthat/test-features.R
 d2bf694fe712539d2e53f9154a77dc68 *tests/testthat/test-graphics.R
-4aec0856277346893746caba03aa06ec *tests/testthat/test-seats.R
+7eecb6d60e51bccf94e7aa62ba76f2e0 *tests/testthat/test-seats.R
 e5bbeda3e74cb3c53c174ca37419d3ee *tests/testthat/test-stl.R
-11bdae45bef6463add8ca839d0fb4942 *tests/testthat/test-x11.R
+13cda9fc74a6e8c532d6dac3d46751e4 *tests/testthat/test-x11.R
 81524eda54403bb206df8c9043cf8a91 *vignettes/feasts.Rmd

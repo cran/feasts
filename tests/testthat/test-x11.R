@@ -1,5 +1,8 @@
 context("test-x11")
 
+skip_if(!is.null(safely(seasonal::checkX13)(fail = TRUE)$error))
+skip_if(!.Platform$OS.type == "windows" && Sys.info()["sysname"] != "Linux")
+
 test_that("Bad inputs for X11 decomposition", {
   expect_error(
     tsibble::pedestrian %>%

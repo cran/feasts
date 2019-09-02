@@ -1,5 +1,8 @@
 context("test-seats")
 
+skip_if(!is.null(safely(seasonal::checkX13)(fail = TRUE)$error))
+skip_if(!.Platform$OS.type == "windows" && Sys.info()["sysname"] != "Linux")
+
 tsbl_co2 <- as_tsibble(co2)
 test_that("Bad inputs for seats decomposition", {
   expect_error(
