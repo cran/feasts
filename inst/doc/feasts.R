@@ -1,4 +1,4 @@
-## ---- include = FALSE----------------------------------------------------
+## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -6,54 +6,56 @@ knitr::opts_chunk$set(
   fig.width = 7
 )
 
-## ----setup, message=FALSE------------------------------------------------
+## ----setup, message=FALSE-----------------------------------------------------
 library(feasts)
 library(tsibble)
 library(dplyr)
 
-## ----data----------------------------------------------------------------
+## ----data---------------------------------------------------------------------
 tourism_melb <- tourism %>%
   filter(Region == "Melbourne")
 tourism_melb %>%
   group_by(Purpose) %>%
   slice(1)
 
-## ----plot----------------------------------------------------------------
+## ----plot---------------------------------------------------------------------
 tourism_melb %>%
   autoplot(Trips)
 
-## ----season-plot---------------------------------------------------------
+## ----season-plot--------------------------------------------------------------
 tourism_melb %>%
   gg_season(Trips)
 
-## ----subseries-plot------------------------------------------------------
+## ----subseries-plot-----------------------------------------------------------
 tourism_melb %>%
   gg_subseries(Trips)
 
-## ----acf-----------------------------------------------------------------
+## ----acf----------------------------------------------------------------------
 tourism_melb %>%
   ACF(Trips)
 
-## ----acf-plot------------------------------------------------------------
+## ----acf-plot-----------------------------------------------------------------
 tourism_melb %>%
   ACF(Trips) %>%
   autoplot()
 
-## ----stl-----------------------------------------------------------------
+## ----stl----------------------------------------------------------------------
 tourism_melb %>%
-  STL(Trips ~ season(window = "periodic"))
+  model(STL(Trips ~ season(window = "periodic"))) %>% 
+  components()
 
-## ----stl-plot------------------------------------------------------------
+## ----stl-plot-----------------------------------------------------------------
 tourism_melb %>%
-  STL(Trips ~ season(window = 9)) %>%
+  model(STL(Trips ~ season(window = 9))) %>%
+  components() %>% 
   autoplot()
 
-## ----features------------------------------------------------------------
+## ----features-----------------------------------------------------------------
 tourism_melb_features <- tourism_melb %>%
   features(Trips, feature_set(tags = "stl"))
 tourism_melb_features
 
-## ----featutes-plot-------------------------------------------------------
+## ----featutes-plot------------------------------------------------------------
 library(ggplot2)
 tourism_melb_features %>%
   ggplot(aes(x = trend_strength, y = seasonal_strength_year, colour = Purpose)) +
@@ -61,7 +63,7 @@ tourism_melb_features %>%
   coord_equal() +
   lims(x = c(0,1), y = c(0,1))
 
-## ----features-all-plot---------------------------------------------------
+## ----features-all-plot--------------------------------------------------------
 tourism_features <- tourism %>%
   features(Trips, feat_stl)
 

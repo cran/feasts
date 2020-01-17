@@ -4,8 +4,15 @@
 \alias{gg_lag}
 \title{Lag plots}
 \usage{
-gg_lag(data, y = NULL, period = NULL, lags = 1:9, geom = c("path",
-  "point"), ...)
+gg_lag(
+  data,
+  y = NULL,
+  period = NULL,
+  lags = 1:9,
+  geom = c("path", "point"),
+  arrow = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{A tidy time series object (tsibble)}
@@ -18,6 +25,10 @@ automatically selected from the data.}
 \item{lags}{A vector of lags to display as facets.}
 
 \item{geom}{The geometry used to display the data.}
+
+\item{arrow}{Arrow specification to show the direction in the lag path. If
+TRUE, an appropriate default arrow will be used. Alternatively, a user
+controllable arrow created with \code{\link[grid:arrow]{grid::arrow()}} can be used.}
 
 \item{...}{Additional arguments passed to the geom.}
 }

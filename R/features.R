@@ -17,7 +17,7 @@ n_crossing_points <- function(x)
 #' @export
 stat_arch_lm <- function(x, lags = 12, demean = TRUE)
 {
-  if (length(x) <= 13) {
+  if (length(x) <= lags + 1) {
     return(c(arch_lm = NA_real_))
   }
   if (demean) {
@@ -25,8 +25,8 @@ stat_arch_lm <- function(x, lags = 12, demean = TRUE)
   }
   mat <- embed(x^2, lags + 1)
   fit <- lm(mat[, 1] ~ mat[, -1])
-  arch.lm <- summary(fit)
-  c(stat_arch_lm = arch.lm$r.squared)
+  stat_arch_lm <- summary(fit)$r.squared
+  c(stat_arch_lm = if(is.nan(stat_arch_lm)) 1 else stat_arch_lm)
 }
 
 #' STL features
@@ -56,7 +56,10 @@ feat_stl <- function(x, .period, s.window = 13, ...){
   if(any(!rle_na$values)){
     rle_window <- which(rle_na$values)[which.max(rle_na$lengths[rle_na$values])]
     rle_idx <- cumsum(rle_na$lengths)
-    rle_window <- c(rle_idx[max(1, rle_window - 1)] + (rle_window > 1), rle_idx[rle_window])
+    rle_window <- c(
+      if(rle_window == 1) 1 else rle_idx[max(1, rle_window - 1)] + (rle_window > 1),
+      rle_idx[rle_window]
+    )
     x <- x[seq(rle_window[1], rle_window[2])]
   }
   else{
@@ -101,9 +104,15 @@ feat_stl <- function(x, .period, s.window = 13, ...){
   })
   names(seasonal_trough) <- sprintf("seasonal_trough_%s", names(seasonalities))
 
-  c(trend_strength = trend_strength, seasonal_strength,
+  acf_resid <- stats::acf(remainder, lag.max = max(c(10, .period)),
+                     plot = FALSE, na.action = stats::na.pass ,...)$acf
+
+  c(
+    trend_strength = trend_strength, seasonal_strength,
+    seasonal_peak,  seasonal_trough,
     spikiness = spikiness, linearity = linearity, curvature = curvature,
-    seasonal_peak,  seasonal_trough)
+    stl_e_acf1 = acf_resid[2L], stl_e_acf10 = sum((acf_resid[2L:11L])^2)
+  )
 }
 
 #' Unit root tests
@@ -362,14 +371,16 @@ shift_kl_max <- function(x, .size = NULL, .period = 1) {
 #' Computes the spectral entropy of a time series
 #'
 #' @inheritParams shift_level_max
+#' @param .period The seasonal period.
 #' @param ... Further arguments for [`ForeCA::spectral_entropy()`]
 #'
 #' @return A numeric value.
 #' @author Rob J Hyndman
 #' @export
-feat_spectral <- function(x, ...) {
+feat_spectral <- function(x, .period = 1, ...) {
   require_package("ForeCA")
-  entropy <- ForeCA::spectral_entropy(na.contiguous(x), ...)[1L]
+  x <- na.contiguous(ts(x, frequency = .period))
+  entropy <- ForeCA::spectral_entropy(x, ...)[1L]
   return(c(spectral_entropy = entropy))
 }
 
@@ -395,7 +406,7 @@ var_tiled_var <- function(x, .size = NULL, .period = 1) {
 
   x <- scale(x, center = TRUE, scale = TRUE)
   varx <- tsibble::tile_dbl(x, var, na.rm = TRUE, .size = .size)
-
+  varx <- varx[seq_len(length(x)/.size)]
   if (length(x) < 2 * .size) {
     lumpiness <- 0
   } else {

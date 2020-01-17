@@ -52,8 +52,26 @@ train_seats <- function(.data, formula, specials, x11, x11.mode, ...){
     season_adjust = call2("*", sym("trend"), sym("irregular"))
   )
 
-  fabletools::as_dable(dcmp, resp = !!sym(measured_vars(.data)),
-                      method = "X-13ARIMA-SEATS", seasons = seasonalities, aliases = aliases)
+  structure(
+    list(decomposition = dcmp,
+         response = measured_vars(.data), method = "X-13ARIMA-SEATS",
+         seasons = seasonalities, aliases = aliases
+    ),
+    class = "x13_decomposition"
+  )
+}
+
+#' @importFrom fabletools components as_dable
+#' @export
+components.x13_decomposition <- function(object, ...){
+  as_dable(object[["decomposition"]], response = !!sym(object[["response"]]),
+           method = object[["method"]], seasons = object[["seasons"]],
+           aliases = object[["aliases"]])
+}
+
+#' @importFrom fabletools model_sum
+model_sum.x13_decomposition <- function(x){
+  "SEATS"
 }
 
 # #' Seasonal decomposition with X-13ARIMA-SEATS
@@ -92,10 +110,10 @@ train_seats <- function(.data, formula, specials, x11, x11.mode, ...){
 # #'
 # #' Official X-13ARIMA-SEATS manual: https://www.census.gov/ts/x13as/docX13ASHTML.pdf
 # #'
-# #' @importFrom fabletools new_decomposition_class new_decomposition_definition
-SEATS <- function(.data, formula, ...){
-  dcmp <- new_decomposition_class("SEATS", train = train_seats,
-                                  specials = specials_seats, check = all_tsbl_checks)
-  new_decomposition_definition(dcmp, .data, !!enquo(formula), ...)
+# #' @importFrom fabletools new_model_class new_model_definition
+SEATS <- function(formula, ...){
+  dcmp <- new_model_class("SEATS", train = train_seats,
+                          specials = specials_seats, check = all_tsbl_checks)
+  new_model_definition(dcmp, !!enquo(formula), ...)
 }
 
