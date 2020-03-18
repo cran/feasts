@@ -7,7 +7,12 @@ format_time <- function(x, format, ...){
     qtr <- 1 + as.numeric(format(as.Date(x), "%m"))%/%3
     out <- split(out, qtr) %>% imap(function(x, rpl) gsub("%q", rpl, x)) %>% unsplit(qtr)
   }
-  factor(out, levels = unique(out[order(x)]))
+
+  lvls <- switch(format,
+                 `W%V` = sprintf("W%02d", 1:53),
+                 unique(out[order(x)]))
+
+  ordered(out, levels = lvls)
 }
 
 tz_units_since <- function(x){
@@ -18,17 +23,34 @@ tz_units_since <- function(x){
 }
 
 # Find minimum largest identifier for each group
-# 1. Find largest homogenous descriptor within groups
+# 1. Find largest homogeneous descriptor within groups
 # 2. Return if descriptor is distinct across groups
 # 3. If descriptor varies across groups, add it to list
 # 4. Go to next largest descriptor and repeat from 2.
-time_identifier <- function(idx, period){
+time_identifier <- function(idx, period, base = NULL, within = NULL, interval){
   if(is.null(period)){
     return(rep(NA, length(idx)))
   }
 
+  # Early return for years in weeks, as years are structured differently in context of weeks
+  if (identical(period, lubridate::years(1)) && identical(base, lubridate::weeks(1))){
+    return(list(facet_id = NA, id = format_time(idx, format = "%G")))
+  }
+
   grps <- floor_tsibble_date(idx, period)
-  fmt_idx_grp <- split(idx, grps)
+
+  facet_grps <- if(!is.null(within)){
+    time_identifier(idx, period = within, base = period, interval = interval)$id
+  } else {
+    FALSE
+  }
+
+  # Create format groups for each series
+  fmt_idx_grp <- map2(
+    split(idx, facet_grps),
+    split(grps, facet_grps),
+    split
+  )
 
   formats <- list(
     Weekday = "%A",
@@ -37,7 +59,7 @@ time_identifier <- function(idx, period){
     Week = "W%V",
     Month = "%b",
     Year = "%Y",
-    Yearweek = "%Y W%V",
+    Yearweek = "%G W%V",
     Yearmonth = "%Y %b",
     Minute = "%M",
     Hour = "%H",
@@ -46,27 +68,55 @@ time_identifier <- function(idx, period){
     Date = "%x",
     Datetime = "%x %X"
   )
-
-  found_format <- FALSE
-  for(fmt in formats){
-    # fmt_idx_grp <- if(grepl("W%V", fmt)) wk_idx_grp else idx_grp
-    if(length(unique(format_time(fmt_idx_grp[[1]], format = fmt))) == 1){
-      ids <- map(fmt_idx_grp, function(x) unique(format_time(x, format = fmt)))
-      if(all(map_lgl(ids, function(x) length(x) == 1)) && length(unique(ids)) == length(fmt_idx_grp)){
-        found_format <- TRUE
-        break
-      }
+  # Remove unreasonable formats for a given interval
+  if(!is_empty(interval)){
+    if(interval >= months(1)){
+      formats <- formats[c("Month", "Year", "Yearmonth", "Date")]
+    } else if (interval >= lubridate::weeks(1)){
+      formats <- formats[c("Monthday", "Yearday", "Week", "Month", "Year",
+                           "Yearweek", "Yearmonth", "Date")]
+    } else if (interval >= lubridate::days(1)){
+      formats <- formats[c("Weekday", "Monthday", "Yearday", "Week", "Month", "Year",
+                           "Yearweek", "Yearmonth", "Date")]
     }
   }
 
-  if(found_format){
+
+  # Check if the format uniquely identifies the group
+  for(fmt in formats){
+    for(fct in fmt_idx_grp){
+      found_format <- FALSE
+      id <- rep(NA_character_, length(fct))
+      for(i in seq_along(fct)){
+        val <- unique(format_time(fct[[i]], format = fmt))
+        if(length(val) > 1) break
+        id[i] <- as.character(val)
+      }
+      if(is.na(id[length(id)])) break
+      if(anyDuplicated(id)) break
+      found_format <- TRUE
+    }
+    if(found_format) break
+  }
+
+  out <- if(found_format){
     format_time(idx, format = fmt)
   }
   else{
     # Default to time ranges
-    map(fmt_idx_grp, function(x) rep(paste0(c(min(x), max(x)), collapse = " - "), length(x))) %>%
-      unsplit(grps)
+    map2(fmt_idx_grp, split(grps, facet_grps), function(x, grps){
+      map(x, function(y){
+        rep(paste0(c(min(y), max(y)), collapse = " - "), length(y))
+      }) %>%
+        unsplit(grps)
+    }) %>%
+      unsplit(facet_grps) %>%
+      ordered()
   }
+  list(
+    facet_id = if(!is.null(within)) facet_grps else NA,
+    id = out
+  )
 }
 
 within_time_identifier <- function(x){
@@ -79,7 +129,7 @@ within_time_identifier <- function(x){
     Monthday = "%d",
     Yearquarter = "%Y Q%q",
     Yearmonth = "%Y %b",
-    Yearweek = "%Y W%V",
+    Yearweek = "%G W%V",
     Yearday = "%j",
     Date = "%x",
     Hour = "%H",
@@ -160,8 +210,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
 
   labels <- match.arg(labels)
   check_gaps(data)
-  idx <- index(data)
-  idx_class <- class(data[[as_string(idx)]])
+  idx <- index_var(data)
   n_key <- n_keys(data)
   keys <- key(data)
   ts_interval <- interval_to_period(interval(data))
@@ -188,13 +237,10 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
     }
   }
 
-  data <- as_tibble(data) %>%
-    mutate(
-      facet_id = time_identifier(!!idx, facet_period) %empty% NA,
-      id = time_identifier(!!idx, period),
-      !!as_string(idx) := time_offset_origin(!!idx, period)
-    ) %>%
-    mutate(id = ordered(!!sym("id")))
+  data <- as_tibble(data)
+  data[c("facet_id", "id")] <- time_identifier(data[[idx]], period,
+                                               within = facet_period, interval = ts_interval)
+  data[idx] <- time_offset_origin(data[[idx]], period)
 
   if(polar){
     warn("Polar plotting is not fully supported yet, and the resulting graph may be incorrect.
@@ -211,9 +257,9 @@ This issue will be resolved once vctrs is integrated into dplyr.")
     data <- rbind(data, extra_x)
   }
 
-  num_ids <- NROW(distinct(data, !!sym("id")))
+  num_ids <- length(unique(data[["id"]]))
 
-  mapping <- aes(x = !!idx, y = !!y, colour = unclass(!!sym("id")), group = !!sym("id"))
+  mapping <- aes(x = !!sym(idx), y = !!y, colour = unclass(!!sym("id")), group = !!sym("id"))
 
   p <- ggplot(data, mapping) +
     geom_line(...) +
@@ -235,7 +281,7 @@ This issue will be resolved once vctrs is integrated into dplyr.")
     p <- p + facet_grid(rows = vars(!!!keys), scales = "free_y")
   }
 
-  if(inherits(data[[expr_text(idx)]], "Date")){
+  if(inherits(data[[idx]], "Date")){
     p <- p + ggplot2::scale_x_date(breaks = function(limit){
       if(suppressMessages(len <- period/ts_interval) <= 12){
         ggplot2::scale_x_date()$trans$breaks(limit, n = len)
@@ -243,7 +289,7 @@ This issue will be resolved once vctrs is integrated into dplyr.")
         ggplot2::scale_x_date()$trans$breaks(limit)
       }
     }, labels = within_time_identifier)
-  } else if(inherits(data[[expr_text(idx)]], "POSIXct")){
+  } else if(inherits(data[[idx]], "POSIXct")){
     p <- p + ggplot2::scale_x_datetime(breaks = function(limit){
       if(period == lubridate::weeks(1)){
         ggplot2::scale_x_datetime()$trans$breaks(limit, n = 7)
@@ -260,17 +306,17 @@ This issue will be resolved once vctrs is integrated into dplyr.")
 
   if(labels != "none"){
     if(labels == "left"){
-      label_pos <- expr(min(!!idx))
+      label_pos <- expr(min(!!sym(idx)))
     }
     else if(labels == "right"){
-      label_pos <- expr(max(!!idx))
+      label_pos <- expr(max(!!sym(idx)))
     }
     else{
-      label_pos <- expr(range(!!idx))
+      label_pos <- expr(range(!!sym(idx)))
     }
     labels_x <- data %>%
       group_by(!!!syms(c("facet_id", "id"))) %>%
-      filter(!!idx %in% !!label_pos)
+      filter(!!sym(idx) %in% !!label_pos)
 
     p <- p + ggplot2::geom_text(aes(label = !!sym("id")), data = labels_x) +
       ggplot2::guides(colour = "none")
@@ -335,19 +381,19 @@ gg_subseries <- function(data, y = NULL, period = NULL, ...){
 
   data <- as_tibble(data) %>%
     mutate(
-      id = time_offset_origin(!!idx, period),
+      id = time_offset_origin(!!idx, !!period),
       .yint = !!y
     ) %>%
     group_by(id, !!!keys) %>%
     mutate(.yint = mean(!!sym(".yint"), na.rm = TRUE))
 
-  fct_labeller <- if(inherits(data[["id"]], c("POSIXt", "Date"))){
+  fct_labeller <- if(inherits(data[["id"]], c("yearquarter", "yearmonth", "yearweek", "POSIXt", "Date"))){
     within_time_identifier
   } else if(is.numeric(data[["id"]])) {
-    function(x) x - 1969
+    function(x) format(x - 1969)
   }
   else {
-    identity
+    format
   }
 
   p <- ggplot(data, aes(x = !!idx, y = !!y)) +
@@ -413,7 +459,7 @@ gg_lag <- function(data, y = NULL, period = NULL, lags = 1:9,
 
   period <- get_frequencies(period, data, .auto = "smallest")
 
-  period_units <- period*time_unit(interval(data))
+  period_units <- period*default_time_units(interval(data))
 
   lag_exprs <- map(lags, function(lag) expr(lag(!!y, !!lag))) %>%
     set_names(paste0(".lag_", lags))
@@ -436,7 +482,7 @@ gg_lag <- function(data, y = NULL, period = NULL, lags = 1:9,
     mutate(.lag = factor(!!sym(".lag"), levels = names(lag_exprs), labels = paste("lag", lags))) %>%
     filter(!is.na(!!sym(".value")) & !is.na(!!y))
 
-  mapping <- aes(x = !!y, y = !!sym(".value"))
+  mapping <- aes(x = !!sym(".value"), y = !!y)
   if(period > 1){
     mapping$colour <- sym("season")
   }
@@ -446,7 +492,7 @@ gg_lag <- function(data, y = NULL, period = NULL, lags = 1:9,
     geom_abline(colour = "gray", linetype = "dashed") +
     lag_geom(..., arrow = arrow) +
     facet_wrap(~ .lag) +
-    ylab(paste0("lag(", as_string(y), ", n)"))
+    xlab(paste0("lag(", as_string(y), ", n)"))
 }
 
 #' Ensemble of time series displays
@@ -539,11 +585,23 @@ gg_tsdisplay <- function(data, y = NULL, plot_type = c("auto", "partial", "seaso
       geom_point() +
       xlab(expression(Y[t - 1])) + ylab(expression(Y[t]))
   } else if(plot_type == "spectrum"){
-    p3 <- stats::spec.ar(data[[expr_text(y)]], plot = FALSE) %>%
-      {tibble(spectrum = .$spec[,1], frequency = .$freq)} %>%
-      ggplot(aes(x = !!sym("frequency"), y = !!sym("spectrum"))) +
-      geom_line() +
-      ggplot2::scale_y_log10()
+    spec <- safely(stats::spec.ar)(eval_tidy(y, data), plot = FALSE)
+
+    p3 <- if (is.null(spec[["result"]])){
+      if(spec$error$message == "missing values in object"){
+        warn("Spectrum plot could not be shown as the data contains missing values. Consider using a different `plot_type`.")
+      }
+      else {
+        warn(sprintf("Spectrum plot could not be shown as an error occurred: %s", spec$error$message))
+      }
+      ggplot() + ggplot2::labs(x = "frequency", y = "spectrum")
+    } else {
+      spec[["result"]] %>%
+        {tibble(spectrum = .$spec[,1], frequency = .$freq)} %>%
+        ggplot(aes(x = !!sym("frequency"), y = !!sym("spectrum"))) +
+        geom_line() +
+        ggplot2::scale_y_log10()
+    }
   }
 
   structure(list(p1, p2, p3), class = c("gg_tsensemble", "gg"))

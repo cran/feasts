@@ -25,7 +25,7 @@ stat_arch_lm <- function(x, lags = 12, demean = TRUE)
   }
   mat <- embed(x^2, lags + 1)
   fit <- lm(mat[, 1] ~ mat[, -1])
-  stat_arch_lm <- summary(fit)$r.squared
+  stat_arch_lm <- suppressWarnings(summary(fit)$r.squared)
   c(stat_arch_lm = if(is.nan(stat_arch_lm)) 1 else stat_arch_lm)
 }
 
@@ -49,8 +49,11 @@ stat_arch_lm <- function(x, lags = 12, demean = TRUE)
 feat_stl <- function(x, .period, s.window = 13, ...){
   dots <- dots_list(...)
   dots <- dots[names(dots) %in% names(formals(stats::stl))]
-  season.args <- list2(!!(names(.period)%||%as.character(.period)) :=
-                         list(period = .period, s.window = s.window))
+  season.args <- if (length(x) < .period * 2) {
+    list()
+  } else {
+    list2(!!(names(.period)%||%as.character(.period)) := list(period = .period, s.window = s.window))
+  }
 
   rle_na <- rle(!is.na(x))
   if(any(!rle_na$values)){
@@ -277,7 +280,7 @@ shift_level_max <- function(x, .size = NULL, .period = 1) {
     .size <- ifelse(.period == 1, 10, .period)
   }
 
-  rollmean <- tsibble::slide_dbl(x, mean, .size = .size, na.rm = TRUE)
+  rollmean <- slider::slide_dbl(x, mean, .before = .size - 1, na.rm = TRUE)
 
   means <- abs(diff(rollmean, .size))
   if (length(means) == 0L) {
@@ -303,7 +306,7 @@ shift_var_max <- function(x, .size = NULL, .period = 1) {
     .size <- ifelse(.period == 1, 10, .period)
   }
 
-  rollvar <- tsibble::slide_dbl(x, var, .size = .size, na.rm = TRUE)
+  rollvar <- slider::slide_dbl(x, var, .before = .size - 1, na.rm = TRUE)
 
   vars <- abs(diff(rollvar, .size))
 
@@ -344,7 +347,7 @@ shift_kl_max <- function(x, .size = NULL, .period = 1) {
   densities <- map(densities, pmax, stats::dnorm(38))
 
   rmean <- map(densities, function(x)
-    tsibble::slide_dbl(x, mean, .size = .size, na.rm = TRUE, .align = "right")
+    slider::slide_dbl(x, mean, .before = .size - 1, na.rm = TRUE)
   ) %>%
     transpose() %>%
     map(unlist)
@@ -405,8 +408,8 @@ var_tiled_var <- function(x, .size = NULL, .period = 1) {
   }
 
   x <- scale(x, center = TRUE, scale = TRUE)
-  varx <- tsibble::tile_dbl(x, var, na.rm = TRUE, .size = .size)
-  varx <- varx[seq_len(length(x)/.size)]
+  varx <- slider::slide_dbl(x[,1], var, na.rm = TRUE,
+                            .after = .size - 1, .step = .size, .complete = TRUE)
   if (length(x) < 2 * .size) {
     lumpiness <- 0
   } else {
@@ -423,7 +426,8 @@ var_tiled_mean <- function(x, .size = NULL, .period = 1) {
   }
 
   x <- scale(x, center = TRUE, scale = TRUE)
-  meanx <- tsibble::tile_dbl(x, mean, na.rm = TRUE, .size = .size)
+  meanx <- slider::slide_dbl(x, mean, na.rm = TRUE,
+                             .after = .size - 1, .step = .size)
 
   if (length(x) < 2 * .size) {
     stability <- 0
@@ -531,4 +535,35 @@ feat_pacf <- function(x, .period = 1, lag_max = NULL, ...) {
   }
 
   return(output)
+}
+
+#' Intermittency features
+#'
+#' Computes various measures that can indicate the presence and structures of
+#' intermittent data.
+#'
+#' @param x A vector to extract features from.
+#'
+#' @return A vector of named features:
+#' - zero_run_mean: The average interval between non-zero observations
+#' - nonzero_squared_cv: The squared coefficient of variation of non-zero observations
+#' - zero_start_prop: The proportion of data which starts with zero
+#' - zero_end_prop: The proportion of data which ends with zero
+#'
+#' @references
+#' Kostenko, A. V., & Hyndman, R. J. (2006). A note on the categorization of
+#' demand patterns. \emph{Journal of the Operational Research Society}, 57(10),
+#' 1256-1257.
+#'
+#' @export
+feat_intermittent <- function(x){
+  rle <- rle(x)
+  nonzero <- x[x!=0]
+
+  c(
+    zero_run_mean = if(length(nonzero) == length(x)) 0 else mean(rle$lengths[rle$values == 0]),
+    nonzero_squared_cv = (sd(nonzero, na.rm = TRUE) / mean(nonzero, na.rm = TRUE))^2,
+    zero_start_prop = if(rle$values[1] != 0) 0 else rle$lengths[1]/length(x),
+    zero_end_prop = if(rle$values[length(rle$values)] != 0) 0 else rle$lengths[length(rle$lengths)]/length(x)
+  )
 }

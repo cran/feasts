@@ -1,3 +1,17 @@
+# feasts 0.1.3
+
+## Improvements
+
+* The axis for `gg_lag()` have been reversed for consistency with `stats::lag.plot()`.
+* Graphical improvements for displaying weekly seasonality in season and subseries plots.
+* Added intermittency features available in `feat_intermittent()`
+
+## Bug fixes
+
+* Fixed the sprectral density plot in `gg_tsdisplay()` not working with plotting expressions of data.
+* Fixed issue with `gg_subseries()` erroring when certain column names are used (#95).
+* Fixed issue with environment handling in `STL()` specials.
+
 # feasts 0.1.2
 
 ## Improvements
