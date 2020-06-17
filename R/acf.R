@@ -6,11 +6,10 @@
 #' Function `CCF` computes the cross-correlation or cross-covariance of two columns
 #' from a tsibble.
 #'
-#' The functions improve the \code{\link[stats]{acf}},
-#' \code{\link[stats]{pacf}} and \code{\link[stats]{ccf}} functions. The main
-#' differences are that `ACF` does not plot a spike at lag 0 when
-#' \code{type=="correlation"} (which is redundant) and the horizontal axes show
-#' lags in time units rather than seasonal units.
+#' The functions improve the [`stats::acf()`], [`stats::pacf()`] and
+#' [`stats::ccf()`] functions. The main differences are that `ACF` does not plot
+#' the exact correlation at lag 0 when `type=="correlation"` and
+#' the horizontal axes show lags in time units rather than seasonal units.
 #'
 #' The resulting tables from these functions can also be plotted using
 #' [`autoplot.tbl_cf()`].
@@ -39,8 +38,7 @@
 #' autocovariance matrices and the linear process bootstrap. \emph{Journal of
 #' Time Series Analysis}, 31(6), 471-482.
 #'
-#' @seealso \code{\link[stats]{acf}}, \code{\link[stats]{pacf}},
-#' \code{\link[stats]{ccf}}
+#' @seealso [`stats::acf()`], [`stats::pacf()`], [`stats::ccf()`]
 #'
 #' @examples
 #' library(tsibble)
@@ -60,10 +58,14 @@
 #' @export
 ACF <- function(.data, ..., lag_max = NULL, demean = TRUE,
                 type = c("correlation", "covariance", "partial")){
+  type <- match.arg(type)
   compute_acf <- function(.data, value, ...){
     value <- enexpr(value)
     x <- eval_tidy(value, data = .data)
-    acf <- tail(as.numeric(acf(x, plot=FALSE, ...)$acf), -1)
+    acf <- as.numeric(acf(x, plot=FALSE, ...)$acf)
+    if(type != "partial"){ # First indx already dropped if partial
+      acf <- tail(acf, -1)
+    }
     tibble(lag = seq_along(acf), acf = acf)
   }
   value <- enexprs(...)
@@ -185,7 +187,7 @@ build_cf <- function(.data, cf_fn, na.action = na.contiguous, ...){
   .data <- unnest_tbl(.data, "data")
   .data[["lag"]] <- as_lag(interval) * .data[["lag"]]
   new_tsibble(
-    as_tsibble(.data, index = "lag", key = kv),
+    as_tsibble(.data, index = "lag", key = !!kv),
     num_obs = lens, class = "tbl_cf"
   )
 }
@@ -221,8 +223,9 @@ vec_arith.cf_lag <- function(op, x, y){
 format.cf_lag <- function(x, ...){
   interval <- attr(x, "interval")
   itvl_data <- if(inherits(interval, "vctrs_vctr")) vctrs::vec_data else unclass
+  itvl_fmt <- utils::getS3method("format", "interval", envir = getNamespace("tsibble"))
   scale <- do.call(sum, itvl_data(interval))
-  suffix <- substring(format(interval), first = nchar(format(scale)) + 1)
+  suffix <- substring(itvl_fmt(interval), first = nchar(format(scale)) + 1)
   paste0(scale*vec_data(x), suffix)
 }
 

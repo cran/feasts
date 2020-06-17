@@ -1,3 +1,25 @@
+# feasts 0.1.4
+
+Minor patch to resolve upstream check issues introduced by dplyr v1.0.0 and 
+tsibble v0.9.0.
+
+## New features
+
+* Circular time plots are now supported by setting `polar = TRUE` in 
+  `gg_season()`.
+
+## Improvements
+
+* Added partial matching of the type argument in `ACF()`.
+* Updated `feat_spectral()` to use `stats::spec.ar()` instead of 
+  `ForeCA::spectral_entropy()`. Note that the feature value will be slightly
+  different due to use of a different spectral estimator, and the fix of a
+  bug in ForeCA.
+
+## Bug fixes
+
+* Fixed the minimum data length for seasonal estimation in `feat_stl()`.
+
 # feasts 0.1.3
 
 ## Improvements

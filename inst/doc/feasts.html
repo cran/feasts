@@ -305,7 +305,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(feasts)</span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(tsibble)</span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">library</span>(dplyr)</span></code></pre></div>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Warning: package &#39;tsibble&#39; was built under R version 3.6.3</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="kw">library</span>(dplyr)</span></code></pre></div>
 <p>The feasts package provides a smorgasbord of tools for analysing tidy temporal data in the tsibble format. The package name is an acronym of its primary functionality: <em>Feature Extraction and Statistics for Time Series</em>.</p>
 <p>Suppose we wanted to analyse seasonal patterns in the number of domestic travellers to Melbourne, Australia. In the <code>tsibble::tourism</code> data set, this can be further broken down into 4 reasons of travel: “business”, “holiday”, “visiting friends and relatives” and “other reasons”. The first observation from each series are shown below.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>tourism_melb &lt;-<span class="st"> </span>tourism <span class="op">%&gt;%</span></span>

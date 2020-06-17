@@ -6,7 +6,9 @@
 \alias{box_pierce}
 \alias{portmanteau_tests}
 \title{Portmanteau tests}
-\format{An object of class \code{list} of length 2.}
+\format{
+An object of class \code{list} of length 2.
+}
 \usage{
 ljung_box(x, lag = 1, dof = 0, ...)
 
@@ -35,6 +37,6 @@ ljung_box(rnorm(100))
 box_pierce(rnorm(100))
 }
 \seealso{
-\code{\link[stats:Box.test]{stats::Box.test()}}
+\code{\link[stats:box.test]{stats::Box.test()}}
 }
 \keyword{datasets}
