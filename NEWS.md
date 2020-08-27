@@ -1,3 +1,28 @@
+# feasts 0.1.5
+
+## Improvements
+
+* `gg_lag()` facets are now displayed with a 1:1 aspect ratio.
+* Season and subseries plots of numeric index data now starts at the earliest 
+  measured observation, rather than assuming a meaningful 0 (#111).
+* The `n_flat_spots()` function has been renamed to `longest_flat_spot()` to 
+  more accurately describe the feature.
+* `gg_season()` and `ggsubseries()` date structure improvements.
+* Documentation improvements
+
+## Breaking changes
+
+* The `n_flat_spots()` return name is now "longest_flat_spot" to better describe
+  the feature.
+
+## Bug fixes
+
+* Fixed spectral density plot in `gg_tsdisplay()` erroring when the `spec.ar`
+  order is chosen to be 0.
+* Fixed `CCF()` lag being spaced by multiples of the data's frequency.
+* Fixed labelling of x-axis for `gg_season()` and `gg_subseries()` (#107).
+* Fixed `View()` not working on `ACF()`, `PACF()` and `CCF()` outputs.
+
 # feasts 0.1.4
 
 Minor patch to resolve upstream check issues introduced by dplyr v1.0.0 and 

@@ -181,6 +181,7 @@ guess_plot_var <- function(x, y){
 #' number of seasonal periods in the data is larger than `max_col`, the plot
 #' will not include a colour. Use `max_col = 0` to never colour the lines, or Inf
 #' to always colour the lines. If labels are used, then max_col will be ignored.
+#' @param pal A colour palette to be used.
 #' @param polar If TRUE, the season plot will be shown on polar coordinates.
 #' @param labels Position of the labels for seasonal period identifier.
 #' @param ... Additional arguments passed to geom_line()
@@ -189,7 +190,7 @@ guess_plot_var <- function(x, y){
 #'
 #' @references
 #' Hyndman and Athanasopoulos (2019) Forecasting: principles and practice,
-#'  3rd edition, OTexts: Melbourne, Australia. https://OTexts.org/fpp3/
+#'  3rd edition, OTexts: Melbourne, Australia. https://OTexts.com/fpp3/
 #'
 #' @examples
 #' library(tsibble)
@@ -204,8 +205,8 @@ guess_plot_var <- function(x, y){
 #' @importFrom ggplot2 ggplot aes geom_line
 #' @export
 gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
-                      max_col = 15, polar = FALSE,
-                      labels = c("none", "left", "right", "both"),  ...){
+                      max_col = 15, pal = scales::hue_pal()(9), polar = FALSE,
+                      labels = c("none", "left", "right", "both"), ...){
   y <- guess_plot_var(data, !!enquo(y))
 
   labels <- match.arg(labels)
@@ -261,7 +262,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
 
   p <- ggplot(data, mapping) +
     geom_line(...) +
-    ggplot2::scale_color_gradientn(colours = scales::hue_pal()(9),
+    ggplot2::scale_color_gradientn(colours = pal,
                                    breaks = if (num_ids < max_col) seq_len(num_ids) else ggplot2::waiver(),
                                    labels = function(idx) levels(data$id)[idx]) +
     ggplot2::labs(colour = NULL)
@@ -298,6 +299,22 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
       }
       unique(time_offset_origin(breaks, period))
     }, labels = within_time_identifier)
+  } else {
+    scale_fn <- paste0("scale_x_", ggplot2::scale_type(data[[idx]]))
+    scale_fn <- if(exists(scale_fn, parent.frame(), mode = "function")){
+      get(scale_fn, parent.frame(), mode = "function")
+    } else {
+      get(scale_fn, asNamespace("feasts"), mode = "function")
+    }
+    p <- p + scale_fn(
+      breaks = function(limit){
+        breaks <- if(suppressMessages(len <- period/ts_interval) <= 12){
+          ggplot2::scale_x_date()$trans$breaks(as.Date(limit), n = len)
+        } else{
+          scale_fn()$trans$breaks(limit)
+        }
+        unique(time_offset_origin(breaks, period))
+      }, labels = within_time_identifier)
   }
 
   if(polar){
@@ -346,7 +363,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
 #'
 #' @references
 #' Hyndman and Athanasopoulos (2019) Forecasting: principles and practice,
-#'  3rd edition, OTexts: Melbourne, Australia. https://OTexts.org/fpp3/
+#'  3rd edition, OTexts: Melbourne, Australia. https://OTexts.com/fpp3/
 #'
 #' @examples
 #' library(tsibble)
@@ -382,6 +399,7 @@ gg_subseries <- function(data, y = NULL, period = NULL, ...){
   data <- as_tibble(data) %>%
     mutate(
       id = time_offset_origin(!!idx, !!period),
+      !!idx := !!idx,
       .yint = !!y
     ) %>%
     group_by(!!sym("id"), !!!keys) %>%
@@ -406,6 +424,14 @@ gg_subseries <- function(data, y = NULL, period = NULL, ...){
     p <- p + ggplot2::scale_x_date(labels = within_time_identifier)
   } else if(inherits(data[[expr_text(idx)]], "POSIXct")){
     p <- p + ggplot2::scale_x_datetime(labels = within_time_identifier)
+  } else {
+    scale_fn <- paste0("scale_x_", ggplot2::scale_type(data[[expr_text(idx)]]))
+    scale_fn <- if(exists(scale_fn, parent.frame(), mode = "function")){
+      get(scale_fn, parent.frame(), mode = "function")
+    } else {
+      get(scale_fn, asNamespace("feasts"), mode = "function")
+    }
+    p <- p + scale_fn(labels = within_time_identifier)
   }
 
   p + ggplot2::theme(axis.text.x.bottom = ggplot2::element_text(angle = 90))
@@ -492,6 +518,7 @@ gg_lag <- function(data, y = NULL, period = NULL, lags = 1:9,
     geom_abline(colour = "gray", linetype = "dashed") +
     lag_geom(..., arrow = arrow) +
     facet_wrap(~ .lag) +
+    ggplot2::theme(aspect.ratio = 1) +
     xlab(paste0("lag(", as_string(y), ", n)"))
 }
 
@@ -517,7 +544,7 @@ gg_lag <- function(data, y = NULL, period = NULL, lags = 1:9,
 #'
 #' @references Hyndman and Athanasopoulos (2019) \emph{Forecasting: principles
 #' and practice}, 3rd edition, OTexts: Melbourne, Australia.
-#' \url{https://OTexts.org/fpp3/}
+#' \url{https://OTexts.com/fpp3/}
 #'
 #' @examples
 #' library(tsibble)
@@ -597,7 +624,7 @@ gg_tsdisplay <- function(data, y = NULL, plot_type = c("auto", "partial", "seaso
       ggplot() + ggplot2::labs(x = "frequency", y = "spectrum")
     } else {
       spec[["result"]] %>%
-        {tibble(spectrum = .$spec[,1], frequency = .$freq)} %>%
+        {tibble(spectrum = drop(.$spec), frequency = .$freq)} %>%
         ggplot(aes(x = !!sym("frequency"), y = !!sym("spectrum"))) +
         geom_line() +
         ggplot2::scale_y_log10()
@@ -620,7 +647,7 @@ gg_tsdisplay <- function(data, y = NULL, plot_type = c("auto", "partial", "seaso
 #'
 #' @references Hyndman and Athanasopoulos (2019) \emph{Forecasting: principles
 #' and practice}, 3rd edition, OTexts: Melbourne, Australia.
-#' \url{https://OTexts.org/fpp3/}
+#' \url{https://OTexts.com/fpp3/}
 #'
 #' @examples
 #' if (requireNamespace("fable", quietly = TRUE)) {
