@@ -277,7 +277,9 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
                         scales = ifelse(n_key > 1, "free", "free_x"))
   }
   else if(n_key > 1){
-    p <- p + facet_grid(rows = vars(!!!keys), scales = "free_y")
+    p <- p + facet_grid(
+      rows = vars(!!!lapply(keys, function(x) expr(format(!!x)))),
+      scales = "free_y")
   }
 
   if(inherits(data[[idx]], "Date")){
@@ -287,7 +289,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
       } else{
         ggplot2::scale_x_date()$trans$breaks(limit)
       }
-      unique(time_offset_origin(breaks, period))
+      unique(time_offset_origin(within_bounds(breaks, limit), period))
     }, labels = within_time_identifier)
   } else if(inherits(data[[idx]], "POSIXct")){
     p <- p + ggplot2::scale_x_datetime(breaks = function(limit){
@@ -297,10 +299,10 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
       else{
         ggplot2::scale_x_datetime()$trans$breaks(limit)
       }
-      unique(time_offset_origin(breaks, period))
+      unique(time_offset_origin(within_bounds(breaks, limit), period))
     }, labels = within_time_identifier)
   } else {
-    scale_fn <- paste0("scale_x_", ggplot2::scale_type(data[[idx]]))
+    scale_fn <- paste0("scale_x_", ggplot2::scale_type(data[[idx]])[1])
     scale_fn <- if(exists(scale_fn, parent.frame(), mode = "function")){
       get(scale_fn, parent.frame(), mode = "function")
     } else {
@@ -313,7 +315,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
         } else{
           scale_fn()$trans$breaks(limit)
         }
-        unique(time_offset_origin(breaks, period))
+        unique(time_offset_origin(within_bounds(breaks, limit), period))
       }, labels = within_time_identifier)
   }
 
@@ -335,7 +337,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
       group_by(!!!syms(c("facet_id", "id"))) %>%
       filter(!!sym(idx) %in% !!label_pos)
 
-    p <- p + ggplot2::geom_text(aes(label = !!sym("id")), data = labels_x) +
+    p <- p + ggplot2::geom_text(aes(label = !!sym("id")), data = labels_x, hjust = "outward") +
       ggplot2::guides(colour = "none")
   }
 
@@ -416,8 +418,10 @@ gg_subseries <- function(data, y = NULL, period = NULL, ...){
 
   p <- ggplot(data, aes(x = !!idx, y = !!y)) +
     geom_line(...) +
-    facet_grid(rows = vars(!!!keys), cols = vars(fct_labeller(!!sym("id"))),
-               scales = "free_y") +
+    facet_grid(
+      rows = vars(!!!lapply(keys, function(x) expr(format(!!x)))),
+      cols = vars(fct_labeller(!!sym("id"))),
+      scales = "free_y") +
     geom_hline(aes(yintercept = !!sym(".yint")), colour = "blue")
 
   if(inherits(data[[expr_text(idx)]], "Date")){
@@ -425,7 +429,7 @@ gg_subseries <- function(data, y = NULL, period = NULL, ...){
   } else if(inherits(data[[expr_text(idx)]], "POSIXct")){
     p <- p + ggplot2::scale_x_datetime(labels = within_time_identifier)
   } else {
-    scale_fn <- paste0("scale_x_", ggplot2::scale_type(data[[expr_text(idx)]]))
+    scale_fn <- paste0("scale_x_", ggplot2::scale_type(data[[expr_text(idx)]])[1])
     scale_fn <- if(exists(scale_fn, parent.frame(), mode = "function")){
       get(scale_fn, parent.frame(), mode = "function")
     } else {
