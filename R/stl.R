@@ -121,6 +121,74 @@ components.stl_decomposition <- function(object, ...){
            aliases = object[["aliases"]])
 }
 
+#' @export
+fitted.stl_decomposition <- function(object, ...) {
+  object[["decomposition"]][[object[["response"]]]] - residuals(object)
+}
+
+#' @importFrom stats residuals
+#' @export
+residuals.stl_decomposition <- function(object, ...) {
+  object[["decomposition"]][["remainder"]]
+}
+
+MBB <- function (x, window_size) {
+  bx <- array(0, (floor(length(x)/window_size) + 2) * window_size)
+  for (i in 1:(floor(length(x)/window_size) + 2)) {
+    c <- sample(1:(length(x) - window_size + 1), 1)
+    bx[((i - 1) * window_size + 1):(i * window_size)] <- x[c:(c + window_size - 1)]
+  }
+  start_from <- sample(0:(window_size - 1), 1) + 1
+  bx[start_from:(start_from + length(x) - 1)]
+}
+
+#' Generate block bootstrapped series from an STL decomposition
+#'
+#' Produces new data with the same structure by resampling the residuals using
+#' a block bootstrap procedure. This method can only generate within sample, and
+#' any generated data out of the trained sample will produce NA simulations.
+#'
+#' @inheritParams fable::generate.ARIMA
+#'
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(STL(log(value))) %>%
+#'   generate(as_tsibble(USAccDeaths), times = 3)
+#'
+#' @references
+#' Bergmeir, C., R. J. Hyndman, and J. M. Benitez (2016). Bagging Exponential Smoothing Methods using STL Decomposition and Box-Cox Transformation. International Journal of Forecasting 32, 303-312.
+#'
+#' @importFrom fabletools generate
+#'
+#' @export
+generate.stl_decomposition <- function(x, new_data, specials = NULL, ...){
+  dcmp <- x$decomposition
+
+  # Match new_data index with dcmp index
+  pos <- vec_match(new_data[[index_var(new_data)]], dcmp[[index_var(dcmp)]])
+
+  if(!(".innov" %in% names(new_data))){
+    # Block bootstrap for each replicate
+    kr <- tsibble::key_rows(new_data)
+
+    # Get default bootstrap params
+    period <- max(vapply(x$seasons, `[[`, double(1L), "period"))
+    block_size <- ifelse(period > 1, 2 * period, min(8, floor(length(x)/2)))
+
+    # Block bootstrap
+    innov <- lapply(seq_along(kr), function(...) MBB(dcmp[["remainder"]], block_size))
+    innov <- mapply(function(i, e) e[pos[i]], kr, innov, SIMPLIFY = FALSE)
+    new_data$.innov <- vec_c(!!!innov)
+  }
+
+  dcmp <- as_tibble(dcmp)[pos,]
+  dcmp$remainder <- new_data$.innov
+
+  new_data[[".sim"]] <- eval_tidy(x$aliases[[x$response]], dcmp)
+  new_data[[".innov"]] <- NULL
+  new_data
+}
+
 #' @importFrom fabletools model_sum
 #' @export
 model_sum.stl_decomposition <- function(x){
