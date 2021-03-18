@@ -10,13 +10,20 @@ ACF(
   .data,
   ...,
   lag_max = NULL,
-  demean = TRUE,
-  type = c("correlation", "covariance", "partial")
+  type = c("correlation", "covariance", "partial"),
+  na.action = na.contiguous,
+  demean = TRUE
 )
 
-PACF(.data, ..., lag_max = NULL)
+PACF(.data, ..., lag_max = NULL, na.action = na.contiguous)
 
-CCF(.data, ..., lag_max = NULL, type = c("correlation", "covariance"))
+CCF(
+  .data,
+  ...,
+  lag_max = NULL,
+  type = c("correlation", "covariance"),
+  na.action = na.contiguous
+)
 }
 \arguments{
 \item{.data}{A tsibble}
@@ -27,13 +34,16 @@ CCF(.data, ..., lag_max = NULL, type = c("correlation", "covariance"))
 where N is the number of observations and m the number of series. Will be
 automatically limited to one less than the number of observations in the series.}
 
-\item{demean}{logical.  Should the covariances be about the sample
-    means?}
-
 \item{type}{character string giving the type of acf to be computed.
     Allowed values are
     \code{"correlation"} (the default), \code{"covariance"} or
     \code{"partial"}.  Will be partially matched.}
+
+\item{na.action}{function to be called to handle missing
+    values. \code{na.pass} can be used.}
+
+\item{demean}{logical.  Should the covariances be about the sample
+    means?}
 }
 \value{
 The \code{ACF}, \code{PACF} and \code{CCF} functions return objects
