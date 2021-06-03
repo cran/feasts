@@ -1,3 +1,31 @@
+# feasts 0.2.2
+
+Minor release for compatibility with an upcoming ggplot2 release. This release
+contains a few bug fixes and improvements to existing functionality.
+
+## Improvements
+
+* The `gg_tsresiduals()` function now allows the type of plotted residual to be
+  controlled via the `type` argument.
+* Improved the default seasonal window for `STL()` decompositions. For data with
+  a single seasonal pattern, the window has changed from 13 to 11. This change
+  is based on results from simulation experiments.
+* Documentation improvements.
+
+## Bug fixes
+
+* Fixed issue where `seasonal::seas()` defaults were not being used in
+  `X_13ARIMA_SEATS()` when `defaults = "seasonal"` (#130).
+* Fixed issue with `gg_subseries()` on data with spaces in the index column 
+  name (#136).
+
+## Breaking changes
+
+* Replaced usage of `...` in `ACF()`, `PACF()`, and `CCF()` with `y` (and `x` 
+  for `CCF()`) arguments. This change should not affect the code for most users,
+  but is important for the eventual passing of `...` to `acf()`, `pacf()` and
+  `ccf()` in a future version (#124).
+
 # feasts 0.2.1
 
 Small patch to fix check issues on Solaris, and to resolve `components()` for

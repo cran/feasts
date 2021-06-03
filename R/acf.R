@@ -56,7 +56,7 @@
 #'
 #' @rdname ACF
 #' @export
-ACF <- function(.data, ..., lag_max = NULL,
+ACF <- function(.data, y, ..., lag_max = NULL,
                 type = c("correlation", "covariance", "partial"),
                 na.action = na.contiguous, demean = TRUE){
   type <- match.arg(type)
@@ -69,7 +69,12 @@ ACF <- function(.data, ..., lag_max = NULL,
     }
     tibble(lag = seq_along(acf), acf = acf)
   }
-  value <- enexprs(...)
+  if(dots_n(...) > 0) {
+    lifecycle::deprecate_warn(
+      "0.2.2", "PACF(...)", details = "ACF variables should be passed to the `y` argument. If multiple variables are to be used, specify them using `vars(...)`."
+    )
+  }
+  value <- Filter(negate(quo_is_missing), enquos(y, ...))
   if(length(value) == 0){
     if(is_empty(measured_vars(.data))){
       abort("There are no variables to compute the ACF.")
@@ -82,7 +87,7 @@ ACF <- function(.data, ..., lag_max = NULL,
   }
   if(length(value) > 1){
     warn(sprintf("ACF currently only supports one column, `%s` will be used.",
-                 expr_text(value[[1]])))
+                 as_name(value[[1]])))
   }
   build_cf(.data, compute_acf, value=!!value[[1]], lag.max = lag_max,
            demean = demean, type = type, na.action = na.action)
@@ -95,7 +100,7 @@ ACF <- function(.data, ..., lag_max = NULL,
 #' vic_elec %>% PACF(Temperature) %>% autoplot()
 #'
 #' @export
-PACF <- function(.data, ..., lag_max = NULL,
+PACF <- function(.data, y, ..., lag_max = NULL,
                  na.action = na.contiguous){
   compute_pacf <- function(.data, value, ...){
     value <- enexpr(value)
@@ -103,7 +108,12 @@ PACF <- function(.data, ..., lag_max = NULL,
     pacf <- as.numeric(pacf(x, plot=FALSE, ...)$acf)
     tibble(lag = seq_along(pacf), pacf = pacf)
   }
-  value <- enexprs(...)
+  if(dots_n(...) > 0) {
+    lifecycle::deprecate_warn(
+      "0.2.2", "PACF(...)", details = "PACF variables should be passed to the `y` argument. If multiple variables are to be used, specify them using `vars(...)`."
+    )
+  }
+  value <- Filter(negate(quo_is_missing), enquos(y, ...))
   if(length(value) == 0){
     if(is_empty(measured_vars(.data))){
       abort("There are no variables to compute the PACF.")
@@ -116,7 +126,7 @@ PACF <- function(.data, ..., lag_max = NULL,
   }
   if(length(value) > 1){
     warn(sprintf("PACF currently only supports one column, `%s` will be used.",
-                 expr_text(value[[1]])))
+                 as_name(value[[1]])))
   }
   build_cf(.data, compute_pacf, value=!!value[[1]], lag.max = lag_max,
            na.action = na.action)
@@ -134,7 +144,7 @@ PACF <- function(.data, ..., lag_max = NULL,
 #'   autoplot()
 #'
 #' @export
-CCF <- function(.data, ..., lag_max = NULL,
+CCF <- function(.data, y, x, ..., lag_max = NULL,
                 type = c("correlation", "covariance"),
                 na.action = na.contiguous){
   compute_ccf <- function(.data, value1, value2, ...){
@@ -146,7 +156,12 @@ CCF <- function(.data, ..., lag_max = NULL,
     lag <- as.numeric(ccf$lag)
     tibble(lag = lag, ccf = as.numeric(ccf$acf))
   }
-  value <- enexprs(...)
+  if(dots_n(...) > 0) {
+    lifecycle::deprecate_warn(
+      "0.2.2", "CCF(...)", details = "CCF variables should be passed to the `y` and `x` arguments. If multiple variables are to be used, specify them using `vars(...)`."
+    )
+  }
+  value <- Filter(negate(quo_is_missing), enquos(y, x, ...))
   if(length(value) == 0){
     if(length(measured_vars(.data)) < 2){
       abort("CCF requires two columns to be specified.")
@@ -159,7 +174,7 @@ CCF <- function(.data, ..., lag_max = NULL,
   }
   if(length(value) > 2){
     warn(sprintf("CCF currently only supports two columns, `%s` and `%s` will be used.",
-                 expr_text(value[[1]]), expr_text(value[[2]])))
+                 as_name(value[[1]]), as_name(value[[2]])))
   }
   if(length(value) == 1){
     abort("CCF requires two columns to be specified.")
