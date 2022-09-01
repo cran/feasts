@@ -1,3 +1,33 @@
+# feasts 0.3.0
+
+## New features
+
+* Added the `tapered` argument to `ACF()` and `PACF()` for producing banded and
+  tapered estimates of autocovariance (#1).
+
+## Improvements
+
+* `gg_season()` now allows seasonal period identifying labels to be nudged and
+  repelled with the `labels_repel`, `labels_left_nudge`, and 
+  `labels_right_nudge` arguments.
+* `gg_season()` behaviour of `max_col` has been restored, where colours aren't
+  used if the number of subseries to be coloured exceeds this value. The default
+  has changed to `Inf` since this function now supports continuous colour
+  guides. A new argument `max_col_discrete` has been added to control the
+  threshold for showing discrete and continuous colour guides (#150).
+* Updated `guerrero()` method to maintain a consistent subseries length by 
+  removing the first few observations of needed. This more closely matches
+  the described method, and the implementation in the forecast package.
+* Added `grid.draw()` method for ensemble graphics (`gg_tsdisplay()` and
+  `gg_tsresiduals()`). This allows use of `ggsave()` with these plots (#149).
+
+## Bug fixes
+
+* Fixed `generate(<STL>)` returning `$.sim` as a `num [1:n(1d)]` instead of 
+  `num [1:72]` (fable/#336).
+* Fixed issue with `gg_season()` incorrectly grouping some seasonal subseries.
+* `CCF()` now matches `stats::ccf()` `x` and `y` arguments (#144).
+
 # feasts 0.2.2
 
 Minor release for compatibility with an upcoming ggplot2 release. This release

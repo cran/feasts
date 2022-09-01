@@ -9,10 +9,14 @@ gg_season(
   y = NULL,
   period = NULL,
   facet_period = NULL,
-  max_col = 15,
+  max_col = Inf,
+  max_col_discrete = 7,
   pal = (scales::hue_pal())(9),
   polar = FALSE,
   labels = c("none", "left", "right", "both"),
+  labels_repel = FALSE,
+  labels_left_nudge = 0,
+  labels_right_nudge = 0,
   ...
 )
 }
@@ -32,11 +36,17 @@ number of seasonal periods in the data is larger than \code{max_col}, the plot
 will not include a colour. Use \code{max_col = 0} to never colour the lines, or Inf
 to always colour the lines. If labels are used, then max_col will be ignored.}
 
+\item{max_col_discrete}{The maximum number of colours to show using a discrete colour scale.}
+
 \item{pal}{A colour palette to be used.}
 
 \item{polar}{If TRUE, the season plot will be shown on polar coordinates.}
 
 \item{labels}{Position of the labels for seasonal period identifier.}
+
+\item{labels_repel}{If TRUE, the seasonal period identifying labels will be repelled with the ggrepel package.}
+
+\item{labels_left_nudge, labels_right_nudge}{Allows seasonal period identifying labels to be nudged to the left or right from their default position.}
 
 \item{...}{Additional arguments passed to geom_line()}
 }

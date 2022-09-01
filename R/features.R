@@ -418,7 +418,7 @@ shift_kl_max <- function(x, .size = NULL, .period = 1) {
 #'
 #' Goerg, G. M. (2013). \dQuote{Forecastable Component Analysis}.
 #' Journal of Machine Learning Research (JMLR) W&CP 28 (2): 64-72, 2013.
-#' Available at \url{https://jmlr.org/proceedings/papers/v28/goerg13.html}.
+#' Available at \url{https://proceedings.mlr.press/v28/goerg13.html}.
 #'
 #' @examples
 #' feat_spectral(rnorm(1000))
@@ -430,7 +430,7 @@ feat_spectral <- function(x, .period = 1, ...) {
   spec <- try(stats::spec.ar(na.contiguous(ts(x, frequency = .period)),
                              plot=FALSE, method='burg',
                              n.freq = ceiling(length(x)/2 + 1)), ...)
-  if (class(spec) == "try-error") {
+  if (inherits(spec, "try-error")) {
     entropy <- NA
   } else {
     fx <- c(rev(spec$spec[-1]),spec$spec)/ length(x)

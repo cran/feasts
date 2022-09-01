@@ -49,7 +49,7 @@ method, the \code{x11()} function can be used in the model formula.
 
 The specials of the X-13ARIMA-SEATS model closely follow the individual
 specification options of the original function. Refer to
-\href{https://www.census.gov/ts/x13as/docX13AS.pdf#chapter.7}{Chapter 7 of the X-13ARIMA-SEATS Reference Manual}
+\href{https://www2.census.gov/software/x-13arima-seats/x13as/windows/documentation/docx13as.pdf#chapter.7}{Chapter 7 of the X-13ARIMA-SEATS Reference Manual}
 for full details of the arguments.
 
 The available specials for this model are:
@@ -324,6 +324,14 @@ fit <- tsibbledata::aus_production \%>\%
 
 report(fit)
 components(fit)
+
+# Additive X-11 decomposition
+fit <- tsibbledata::aus_production \%>\%
+  model(X_13ARIMA_SEATS(Beer ~ transform(`function` = "none") + x11(mode = "add")))
+
+report(fit)
+components(fit)
+
 }
 
 }
@@ -341,7 +349,7 @@ time trend-cycle estimation". \emph{Springer}.
 X-13ARIMA-SEATS Documentation from the seasonal package's website:
 http://www.seasonal.website/seasonal.html
 
-Official X-13ARIMA-SEATS manual: https://www.census.gov/ts/x13as/docX13ASHTML.pdf
+Official X-13ARIMA-SEATS manual: \url{https://www2.census.gov/software/x-13arima-seats/x13as/windows/documentation/docx13as.pdf}
 }
 \seealso{
 \code{\link[seasonal:seas]{seasonal::seas()}}

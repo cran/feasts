@@ -42,7 +42,7 @@ time_identifier <- function(idx, period, base = NULL, within = NULL, interval){
   facet_grps <- if(!is.null(within)){
     time_identifier(idx, period = within, base = period, interval = interval)$id
   } else {
-    FALSE
+    rep_along(idx, FALSE)
   }
 
   # Create format groups for each series
@@ -106,9 +106,9 @@ time_identifier <- function(idx, period, base = NULL, within = NULL, interval){
     # Default to time ranges
     map2(fmt_idx_grp, split(grps, facet_grps), function(x, grps){
       map(x, function(y){
-        rep(paste0(c(min(y), max(y)), collapse = " - "), length(y))
+        rep(paste0(range(y), collapse = " - "), length(y))
       }) %>%
-        unsplit(grps)
+        unsplit(as.factor(format(grps)))
     }) %>%
       unsplit(facet_grps) %>%
       ordered()
@@ -186,9 +186,12 @@ guess_plot_var <- function(x, y){
 #' number of seasonal periods in the data is larger than `max_col`, the plot
 #' will not include a colour. Use `max_col = 0` to never colour the lines, or Inf
 #' to always colour the lines. If labels are used, then max_col will be ignored.
+#' @param max_col_discrete The maximum number of colours to show using a discrete colour scale.
 #' @param pal A colour palette to be used.
 #' @param polar If TRUE, the season plot will be shown on polar coordinates.
 #' @param labels Position of the labels for seasonal period identifier.
+#' @param labels_repel If TRUE, the seasonal period identifying labels will be repelled with the ggrepel package.
+#' @param labels_left_nudge,labels_right_nudge Allows seasonal period identifying labels to be nudged to the left or right from their default position.
 #' @param ... Additional arguments passed to geom_line()
 #'
 #' @return A ggplot object showing a seasonal plot of a time series.
@@ -210,8 +213,12 @@ guess_plot_var <- function(x, y){
 #' @importFrom ggplot2 ggplot aes geom_line
 #' @export
 gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
-                      max_col = 15, pal = scales::hue_pal()(9), polar = FALSE,
-                      labels = c("none", "left", "right", "both"), ...){
+                      max_col = Inf, max_col_discrete = 7,
+                      pal = scales::hue_pal()(9), polar = FALSE,
+                      labels = c("none", "left", "right", "both"),
+                      labels_repel = FALSE,
+                      labels_left_nudge = 0, labels_right_nudge = 0,
+                      ...){
   y <- guess_plot_var(data, !!enquo(y))
 
   labels <- match.arg(labels)
@@ -265,14 +272,24 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
 
   mapping <- aes(x = !!sym(idx), y = !!y, colour = unclass(!!sym("id")), group = !!sym("id"))
 
+  if(num_ids > max_col){
+    mapping$colour <- NULL
+  }
+
   p <- ggplot(data, mapping) +
     geom_line(...) +
-    ggplot2::scale_color_gradientn(colours = pal,
-                                   breaks = if (num_ids < max_col) seq_len(num_ids) else ggplot2::waiver(),
-                                   labels = function(idx) levels(data$id)[idx]) +
     ggplot2::labs(colour = NULL)
 
-  if(num_ids < max_col){
+  if(num_ids <= max_col){
+    p <- p +
+      ggplot2::scale_color_gradientn(
+        colours = pal,
+        breaks = if (num_ids <= max_col_discrete) seq_len(num_ids) else ggplot2::waiver(),
+        labels = function(idx) levels(data$id)[idx]
+      )
+  }
+
+  if(num_ids <= max_col_discrete){
     p <- p + ggplot2::guides(colour = ggplot2::guide_legend())
   }
 
@@ -329,21 +346,30 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
   }
 
   if(labels != "none"){
-    if(labels == "left"){
-      label_pos <- expr(min(!!sym(idx)))
+    labeller <- if(labels_repel) {
+      require_package("ggrepel")
+      function(...) ggrepel::geom_text_repel(..., direction = "y", segment.colour = NA)
+    } else {
+      ggplot2::geom_text
     }
-    else if(labels == "right"){
-      label_pos <- expr(max(!!sym(idx)))
-    }
-    else{
-      label_pos <- expr(range(!!sym(idx)))
-    }
-    labels_x <- data %>%
-      group_by(!!!syms(c("facet_id", "id"))) %>%
-      filter(!!sym(idx) %in% !!label_pos)
+    if(labels %in% c("left", "both")){
+      labels_left <- data %>%
+        group_by(!!!syms(c("facet_id", "id"))) %>%
+        filter(!!sym(idx) %in% min(!!sym(idx)))
 
-    p <- p + ggplot2::geom_text(aes(label = !!sym("id")), data = labels_x, hjust = "outward") +
-      ggplot2::guides(colour = "none")
+      p <- p + labeller(aes(label = !!sym("id")), data = labels_left,
+                        hjust = "outward", nudge_x = labels_left_nudge)
+    }
+    if(labels %in% c("right", "both")){
+      labels_right <- data %>%
+        group_by(!!!syms(c("facet_id", "id"))) %>%
+        filter(!!sym(idx) %in% max(!!sym(idx)))
+
+      p <- p + labeller(aes(label = !!sym("id")), data = labels_right,
+                        hjust = "outward", nudge_x = labels_right_nudge)
+    }
+
+    p <- p + ggplot2::guides(colour = "none")
   }
 
   p
@@ -543,7 +569,6 @@ gg_lag <- function(data, y = NULL, period = NULL, lags = 1:9,
 #' @inheritParams gg_season
 #' @inheritParams ACF
 #'
-
 #' @return A list of ggplot objects showing useful plots of a time series.
 #'
 #' @author Rob J Hyndman & Mitchell O'Hara-Wild
@@ -696,9 +721,27 @@ gg_tsresiduals <- function(data, type = "innovation", ...){
 
 #' @export
 print.gg_tsensemble <- function(x, ...){
-  print(x[[1]], vp = grid::viewport(layout.pos.row = c(1, 1), layout.pos.col = c(1, 2)))
-  print(x[[2]], vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 1))
-  print(x[[3]], vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 2))
+  x <- lapply(x, ggplot2::ggplotGrob)
+
+  gt <- gtable::gtable(
+    name = "tsensemble",
+    heights = grid::unit(rep(1, 2), "null"),
+    widths = grid::unit(rep(1, 2), "null")
+  )
+  gt <- gtable::gtable_add_grob(
+    gt, x,
+    t = c(1, 2, 2), b = c(1, 2, 2),
+    l = c(1, 1, 2), r = c(2, 1, 2),
+    z = seq_along(x), clip = "off"
+  )
+  grid.draw(gt)
+}
+
+#' @importFrom grid grid.draw
+#' @method grid.draw gg_tsensemble
+#' @export
+grid.draw.gg_tsensemble <- function(x, recording = TRUE) {
+  print(x)
 }
 
 #' Plot characteristic ARMA roots

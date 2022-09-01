@@ -13,10 +13,11 @@ ACF(
   lag_max = NULL,
   type = c("correlation", "covariance", "partial"),
   na.action = na.contiguous,
-  demean = TRUE
+  demean = TRUE,
+  tapered = FALSE
 )
 
-PACF(.data, y, ..., lag_max = NULL, na.action = na.contiguous)
+PACF(.data, y, ..., lag_max = NULL, na.action = na.contiguous, tapered = FALSE)
 
 CCF(
   .data,
@@ -30,9 +31,6 @@ CCF(
 }
 \arguments{
 \item{.data}{A tsibble}
-
-\item{y}{a univariate or multivariate (not \code{ccf}) numeric time
-    series object or a numeric vector or matrix, or an \code{"acf"} object.}
 
 \item{...}{The column(s) from the tsibble used to compute the ACF, PACF or CCF.}
 
@@ -51,7 +49,9 @@ automatically limited to one less than the number of observations in the series.
 \item{demean}{logical.  Should the covariances be about the sample
     means?}
 
-\item{x}{a univariate or multivariate (not \code{ccf}) numeric time
+\item{tapered}{Produces banded and tapered estimates of the (partial) autocorrelation.}
+
+\item{x, y}{a univariate or multivariate (not \code{ccf}) numeric time
     series object or a numeric vector or matrix, or an \code{"acf"} object.}
 }
 \value{
@@ -98,8 +98,8 @@ global_economy \%>\%
 
 }
 \references{
-Hyndman, R.J. (2015). Discussion of ``High-dimensional
-autocovariance matrices and optimal linear prediction''. \emph{Electronic
+Hyndman, R.J. (2015). Discussion of "High-dimensional
+autocovariance matrices and optimal linear prediction". \emph{Electronic
 Journal of Statistics}, 9, 792-796.
 
 McMurry, T. L., & Politis, D. N. (2010). Banded and tapered estimates for

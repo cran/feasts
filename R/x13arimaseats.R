@@ -175,7 +175,7 @@ model_sum.feasts_x13arimaseats <- function(x){
 #'
 #' The specials of the X-13ARIMA-SEATS model closely follow the individual
 #' specification options of the original function. Refer to
-#' [Chapter 7 of the X-13ARIMA-SEATS Reference Manual](https://www.census.gov/ts/x13as/docX13AS.pdf#chapter.7)
+#' [Chapter 7 of the X-13ARIMA-SEATS Reference Manual](https://www2.census.gov/software/x-13arima-seats/x13as/windows/documentation/docx13as.pdf#chapter.7)
 #' for full details of the arguments.
 #'
 #' The available specials for this model are:
@@ -449,6 +449,14 @@ model_sum.feasts_x13arimaseats <- function(x){
 #'
 #' report(fit)
 #' components(fit)
+#'
+#' # Additive X-11 decomposition
+#' fit <- tsibbledata::aus_production %>%
+#'   model(X_13ARIMA_SEATS(Beer ~ transform(`function` = "none") + x11(mode = "add")))
+#'
+#' report(fit)
+#' components(fit)
+#'
 #' }
 #'
 #' @seealso [seasonal::seas()]
@@ -468,7 +476,7 @@ model_sum.feasts_x13arimaseats <- function(x){
 #' X-13ARIMA-SEATS Documentation from the seasonal package's website:
 #' http://www.seasonal.website/seasonal.html
 #'
-#' Official X-13ARIMA-SEATS manual: https://www.census.gov/ts/x13as/docX13ASHTML.pdf
+#' Official X-13ARIMA-SEATS manual: <https://www2.census.gov/software/x-13arima-seats/x13as/windows/documentation/docx13as.pdf>
 #'
 #' @importFrom fabletools new_model_class new_model_definition
 #' @export
