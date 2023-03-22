@@ -1,7 +1,7 @@
-2be250b7c19229fbd6a1fb2363cd100b *DESCRIPTION
+aab1e46017b97f6afb7fb3100d064bf1 *DESCRIPTION
 70517aa0f37fed4dcec22d44d6d715ed *NAMESPACE
-c49e88ff8f8f61a94abec036957ed969 *NEWS.md
-f89c078512370d994223bb9ad8c9415b *R/acf.R
+78d703e43be0f29e2847e0d3f0457aee *NEWS.md
+3b401efb2486c219a47200f48b043cf7 *R/acf.R
 d41d8cd98f00b204e9800998ecf8427e *R/attach.R
 360993fd6c9e38e419426ac6ae01f8eb *R/classical.R
 d8b02daf9836e2ee0c12681222ef1b7e *R/compact-purrr.R
@@ -24,7 +24,7 @@ f056cc3105bd3d15b4494a49e8b774aa *README.md
 4c32010512e0a6ee9d0400d560c47a14 *build/vignette.rds
 2191d54ff98f652beed5b4240bcfd041 *inst/doc/feasts.R
 64f1043e3146066a312668bf36515f25 *inst/doc/feasts.Rmd
-63e0cacd092a528d56ce98795f3c9b82 *inst/doc/feasts.html
+c8f8433e8d4ae0ebf52429c66de47e0d *inst/doc/feasts.html
 77aee31505e30b699231445b7699b8bd *man/ACF.Rd
 f6cd5fe728a443bb84ce35848d718b45 *man/STL.Rd
 e2c6af88a37455a554c7bfbfa93e07ab *man/X_13ARIMA_SEATS.Rd
