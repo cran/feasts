@@ -1,6 +1,6 @@
 Package: feasts
 Title: Feature Extraction and Statistics for Time Series
-Version: 0.3.1
+Version: 0.3.2
 Description: Provides a collection of features, decomposition methods, 
     statistical summaries and graphics functions for the analysing tidy time
     series data. The package name 'feasts' is an acronym comprising of its key
@@ -30,7 +30,7 @@ RoxygenNote: 7.2.3
 Language: en-GB
 RdMacros: lifecycle
 NeedsCompilation: no
-Packaged: 2023-03-22 13:42:04 UTC; mitchell
+Packaged: 2024-03-04 01:38:04 UTC; mitchell
 Author: Mitchell O'Hara-Wild [aut, cre],
   Rob Hyndman [aut],
   Earo Wang [aut],
@@ -39,4 +39,4 @@ Author: Mitchell O'Hara-Wild [aut, cre],
   Leanne Chhay [ctb] (Guerrero's method)
 Maintainer: Mitchell O'Hara-Wild <mail@mitchelloharawild.com>
 Repository: CRAN
-Date/Publication: 2023-03-22 14:20:10 UTC
+Date/Publication: 2024-03-15 09:10:02 UTC
