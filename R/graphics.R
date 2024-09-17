@@ -1,3 +1,5 @@
+globalVariables("all_of")
+
 format_time <- function(x, format, ...){
   if(format == "%Y W%V"){
     return(format(yearweek(x)))
@@ -40,7 +42,7 @@ time_identifier <- function(idx, period, base = NULL, within = NULL, interval){
   grps <- floor_tsibble_date(idx, period)
 
   facet_grps <- if(!is.null(within)){
-    time_identifier(idx, period = within, base = period, interval = interval)$id
+    time_identifier(time_offset_origin(floor_tsibble_date(idx, period), within), period = period, base = period, interval = period)$id
   } else {
     rep_along(idx, FALSE)
   }
@@ -54,8 +56,8 @@ time_identifier <- function(idx, period, base = NULL, within = NULL, interval){
 
   formats <- list(
     Weekday = "%A",
-    Monthday = "%d",
-    Yearday = "%j",
+    # Monthday = "%d",
+    # Yearday = "%j",
     Week = "W%V",
     Month = "%b",
     Year = "%Y",
@@ -179,7 +181,14 @@ guess_plot_var <- function(x, y){
 #' @param data A tidy time series object (tsibble)
 #' @param y The variable to plot (a bare expression). If NULL, it will
 #' automatically selected from the data.
-#' @param period The seasonal period to display.
+#' @param period The seasonal period to display. If NULL (default), 
+#' the largest frequency in the data is used. If numeric, it represents 
+#' the frequency times the interval between observations. If a string 
+#' (e.g., "1y" for 1 year, "3m" for 3 months, "1d" for 1 day, 
+#' "1h" for 1 hour, "1min" for 1 minute, "1s" for 1 second), 
+#' it's converted to a Period class object from the lubridate package. 
+#' Note that the data must have at least one observation per seasonal period, 
+#' and the period cannot be smaller than the observation interval.
 #' @param facet_period A secondary seasonal period to facet by
 #' (typically smaller than period).
 #' @param max_col The maximum number of colours to display on the plot. If the
@@ -338,7 +347,7 @@ gg_season <- function(data, y = NULL, period = NULL, facet_period = NULL,
     p <- p + scale_fn(
       breaks = function(limit){
         breaks <- if(suppressMessages(len <- period/ts_interval) <= 12){
-          ggplot2::scale_x_date()$trans$breaks(as.Date(limit), n = len)
+          vctrs::vec_restore(ggplot2::scale_x_date()$trans$breaks(as.Date(limit), n = len), limit)
         } else{
           scale_fn()$trans$breaks(limit)
         }
@@ -804,4 +813,30 @@ gg_arma <- function(data){
     geom_point() +
     ggplot2::coord_fixed(ratio = 1) +
     facet_grid(vars(!!!fcts), vars(!!sym("type")))
+}
+
+
+
+#' Plot impulse response functions
+#'
+#' Produces a plot of impulse responses from an impulse response function.
+#'
+#' @param data A tsibble with impulse responses
+#' @param y The impulse response variables to plot (defaults to all measured variables).
+#'
+#' @return A ggplot object of the impulse responses.
+#'
+#' @export
+gg_irf <- function(data, y = all_of(measured_vars(data))){
+  kv <- key_vars(data)
+  if(is_empty(kv)) kv <- NULL
+  data <- tidyr::pivot_longer(
+    data, {{y}},
+    names_to = ".variable", values_to = ".response"
+  )
+  ggplot(data) +
+    geom_line(ggplot2::aes_string(x = index_var(data), y = ".response")) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    facet_grid(vars(!!!syms(kv)), vars(!!sym(".variable"))) +
+    ggplot2::labs(y = "Impulse response", x = NULL)
 }

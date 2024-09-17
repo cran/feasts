@@ -1,3 +1,20 @@
+# feasts 0.4.0
+
+## New features
+
+* Added `gg_irf()` for plotting impulse responses (typically obtained from using
+  `IRF()` with fable models).
+* Added cointegration tests `cointegration_johansen()` and 
+  `cointegration_phillips_ouliaris()` from `urca`.
+
+## Improvements
+
+* Documentation improvements.
+
+## Bug fixes
+
+* Fixed `gg_season()` not wrapping across `facet_period` argument correctly.
+
 # feasts 0.3.2
 
 Minor patch to resolve CRAN check issues with ggplot2 v3.5.0 breaking changes.
