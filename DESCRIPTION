@@ -1,6 +1,6 @@
 Package: feasts
 Title: Feature Extraction and Statistics for Time Series
-Version: 0.4.0
+Version: 0.4.1
 Description: Provides a collection of features, decomposition methods, 
     statistical summaries and graphics functions for the analysing tidy time
     series data. The package name 'feasts' is an acronym comprising of its key
@@ -26,11 +26,11 @@ License: GPL-3
 URL: http://feasts.tidyverts.org/, https://github.com/tidyverts/feasts/
 BugReports: https://github.com/tidyverts/feasts/issues
 Encoding: UTF-8
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Language: en-GB
 RdMacros: lifecycle
 NeedsCompilation: no
-Packaged: 2024-09-17 05:35:11 UTC; mitchell
+Packaged: 2024-09-25 23:01:19 UTC; mitchell
 Author: Mitchell O'Hara-Wild [aut, cre],
   Rob Hyndman [aut],
   Earo Wang [aut],
@@ -39,4 +39,4 @@ Author: Mitchell O'Hara-Wild [aut, cre],
   Leanne Chhay [ctb] (Guerrero's method)
 Maintainer: Mitchell O'Hara-Wild <mail@mitchelloharawild.com>
 Repository: CRAN
-Date/Publication: 2024-09-17 06:00:02 UTC
+Date/Publication: 2024-09-25 23:40:02 UTC

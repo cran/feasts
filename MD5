@@ -1,7 +1,7 @@
-d3144f6bc5ab721f722b7fd2a1199529 *DESCRIPTION
+df11bc6a5838c72488da560d649edea5 *DESCRIPTION
 f5bd34e0d8eb44fa8d7aeb05ed57abda *NAMESPACE
-722971f953d1711a549ce59ded6897eb *NEWS.md
-3b401efb2486c219a47200f48b043cf7 *R/acf.R
+e1bd2452d0958af195182c91e7f8aa61 *NEWS.md
+8bac468860b268340629e2f57c735da1 *R/acf.R
 d41d8cd98f00b204e9800998ecf8427e *R/attach.R
 50309dc79697540f40a57ccc8d257891 *R/classical.R
 d8b02daf9836e2ee0c12681222ef1b7e *R/compact-purrr.R
@@ -9,7 +9,7 @@ d8b02daf9836e2ee0c12681222ef1b7e *R/compact-purrr.R
 ad8797d804f9e3247c4204d05a190a7a *R/feasts.R
 34f15c28bdbe6b6feeb6ee7f80a323a8 *R/features.R
 ce829fdf85e0a8a2976e356a87995bd1 *R/gg_geom.R
-d9b01adcaa236d078e716a838e3d51a8 *R/graphics.R
+a1724fc2b651785a28c7ea6b6bfb3d96 *R/graphics.R
 12272e0fa5fe23082440442c81405107 *R/guerrero.R
 e57571e62d50f79a8e7ede6a4e5d11a7 *R/reexports.R
 c29191c2cd574796ff596b1eb8bbcf27 *R/seats.R
@@ -25,7 +25,7 @@ f5072f6a1434851b6608a0cf118a4bc6 *README.md
 fdbb3ca7e1db16b652c604756f4c7ad9 *inst/doc/feasts.R
 64f1043e3146066a312668bf36515f25 *inst/doc/feasts.Rmd
 5ba3da7018039b3cd5de14835a3dc5a1 *inst/doc/feasts.html
-d84c55db30e06a88ae939c504dd8e870 *man/ACF.Rd
+cc682afa08e04060214473373e2aca82 *man/ACF.Rd
 f6cd5fe728a443bb84ce35848d718b45 *man/STL.Rd
 e2c6af88a37455a554c7bfbfa93e07ab *man/X_13ARIMA_SEATS.Rd
 2e242e83c03f565a0b5ef76f541f066e *man/autoplot.tbl_cf.Rd
@@ -80,7 +80,7 @@ a64183743caffece63b117e5a1440530 *man/tile_features.Rd
 29b8fdfcc6054ca5822e5be5eb980e1c *man/unitroot.Rd
 54ecdc37f6a9fad263eaf74257df4925 *man/unitroot_ndiffs.Rd
 a37cc1e63adf4ba4fe3c0d61b028a6b0 *tests/testthat.R
-bddd7df85ec02d7373236a7090617702 *tests/testthat/Rplots.pdf
+755cc00430ec1ee68815acdd2944a1dd *tests/testthat/Rplots.pdf
 13223ce695df8e71e3e61466d34a6af2 *tests/testthat/test-cf.R
 af72a103210ea8fa68421d13e70dfc97 *tests/testthat/test-classical.R
 abd1fc8c2e9a123b3c05d9c3e5587e8b *tests/testthat/test-features.R
