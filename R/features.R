@@ -137,7 +137,7 @@ feat_stl <- function(x, .period, s.window = 11, ...){
 #' @rdname unitroot
 #' @export
 unitroot_kpss <- function(x, type = c("mu", "tau"), lags = c("short", "long", "nil"), ...) {
-  require_package("urca")
+  check_installed("urca")
   result <- urca::ur.kpss(x, type = type, lags = lags, ...)
   pval <- stats::approx(result@cval[1,], as.numeric(sub("pct", "", colnames(result@cval)))/100, xout=result@teststat[1], rule=2)$y
   c(kpss_stat = result@teststat, kpss_pvalue = pval)
@@ -151,7 +151,7 @@ unitroot_kpss <- function(x, type = c("mu", "tau"), lags = c("short", "long", "n
 #' @export
 unitroot_pp <- function(x, type = c("Z-tau", "Z-alpha"), model = c("constant", "trend"),
                         lags = c("short", "long"), ...) {
-  require_package("urca")
+  check_installed("urca")
   result <- urca::ur.pp(x, type = match.arg(type), model = match.arg(model),
                         lags = match.arg(lags), ...)
   pval <- stats::approx(result@cval[1,], as.numeric(sub("pct", "", colnames(result@cval)))/100, xout=result@teststat[1], rule=2)$y
@@ -247,7 +247,7 @@ unitroot_nsdiffs <- function(x, alpha = 0.05, unitroot_fn = ~ feat_stl(.,.period
 #'
 #' @export
 cointegration_johansen <- function(x, ...) {
-  require_package("urca")
+  check_installed("urca")
   result <- urca::ca.jo(x, ...)
 
   pct <- as.numeric(sub("pct", "", colnames(result@cval)))/100
@@ -260,12 +260,67 @@ cointegration_johansen <- function(x, ...) {
   c(johansen_stat = list(result@teststat), johansen_pvalue = list(pval))
 }
 
-#' @inherit urca::ca.po
+#' Phillips and Ouliaris Cointegration Features
 #'
-#' @param x Matrix of data to be tested.
-#' @param ... Additional arguments passed to [urca::ca.po()].
+#' Compute Phillips and Ouliaris (1990) residual-based cointegration test
+#' statistics and an approximate p-value as numeric features.
 #'
-#' @seealso [urca::ca.po()]
+#' This is a small wrapper around \code{urca::ca.po()} designed so that the
+#' Phillips–Ouliaris test can be used directly inside
+#' \code{\link[fabletools]{features}}.
+#'
+#' @description
+#' \code{cointegration_phillips_ouliaris()} calls \code{urca::ca.po()} and
+#' returns a named numeric vector containing:
+#' \itemize{
+#'   \item \code{phillips_ouliaris_stat}: the \eqn{P_u} or \eqn{P_z} test
+#'   statistic; and
+#'   \item \code{phillips_ouliaris_pvalue}: an approximate p-value obtained by
+#'   linearly interpolating the tabulated critical values in
+#'   \code{result@cval}.
+#' }
+#'
+#' Since it returns a simple numeric vector, this function is suitable for use
+#' as a feature extractor within the \pkg{fabletools}
+#' \code{\link[fabletools]{features}} framework.
+#'
+#' @param x
+#'   A numeric matrix (or object coercible to a matrix) of time series to be
+#'   tested for cointegration. Columns represent series and rows represent
+#'   ordered observations.
+#'
+#' @param ...
+#'   Additional arguments passed to \code{urca::ca.po()}, such as
+#'   \code{demean}, \code{lag}, \code{type}, and \code{tol}. See
+#'   \code{\link[urca]{ca.po}} for details.
+#'
+#' @details
+#' The function requires the \pkg{urca} package; an informative error is raised
+#' if it is not installed.
+#'
+#' The p-value is computed by interpolating over the first row of
+#' \code{result@cval}, which contains critical values at various significance
+#' levels (e.g., \code{"10pct"}, \code{"5pct"}, \code{"1pct"}). These labels
+#' are converted to probabilities (0.10, 0.05, 0.01), and
+#' \code{\link[stats]{approx}} is used to obtain the approximate p-value at the
+#' observed test statistic. The interpolation is done with \code{rule = 2},
+#' implying linear extrapolation outside the tabulated range.
+#'
+#' @return
+#' A named numeric vector of length two:
+#' \itemize{
+#'   \item \code{phillips_ouliaris_stat}
+#'   \item \code{phillips_ouliaris_pvalue}
+#' }
+#'
+#' @references
+#' Phillips, P.C.B. and Ouliaris, S. (1990),
+#' \dQuote{Asymptotic Properties of Residual Based Tests for Cointegration},
+#' \emph{Econometrica}, \bold{58}(1), 165–193.
+#'
+#' @seealso
+#' \code{\link[urca]{ca.po}},
+#' \code{\link[fabletools]{features}}
 #'
 #' @examples
 #'
@@ -273,7 +328,7 @@ cointegration_johansen <- function(x, ...) {
 #'
 #' @export
 cointegration_phillips_ouliaris <- function(x, ...) {
-  require_package("urca")
+  check_installed("urca")
   result <- urca::ca.po(x, ...)
   pval <- stats::approx(result@cval[1,], as.numeric(sub("pct", "", colnames(result@cval)))/100, xout=result@teststat[1], rule=2)$y
   c(phillips_ouliaris_stat = result@teststat, phillips_ouliaris_pvalue = pval)
@@ -315,7 +370,7 @@ n_flat_spots <- function(x) {
 #'
 #' @export
 coef_hurst <- function(x) {
-  require_package("fracdiff")
+  check_installed("fracdiff")
   # Hurst=d+0.5 where d is fractional difference.
   return(c(coef_hurst = suppressWarnings(fracdiff::fracdiff(na.contiguous(x), 0, 0)[["d"]] + 0.5)))
 }
